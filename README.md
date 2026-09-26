@@ -159,6 +159,19 @@ Windows 桌面应用（PySide6 + Qt Quick），onedir 绿色版，双击即用�
 
 仓库内唯一保留的文档是 [CHANGELOG.md](CHANGELOG.md)：版本记录与更名说明。
 
+## 许可
+
+[PolyForm Noncommercial License 1.0.0](LICENSE)
+
+**可以**：阅读、学习、研究、自己玩、改着玩、非商业地分享（要带上这份许可）。
+
+**不可以**：商业用途——包括把它或它的修改版拿去卖、用在收费产品或服务里。
+
+这不是 MIT（MIT 明文允许商用），也不是「保留所有权利」（那份声明下别人连学都不好意思看）。
+它介于两者之间：**源码敞开给你看和学，但不许拿它赚钱。**
+
+> Required Notice: Copyright zzq (https://github.com/q93304989-bit)
+
 ## 开发
 
 ```powershell

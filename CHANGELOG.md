@@ -64,6 +64,18 @@
   的逐项对照。
 - 文档：[docs/方案-更名与借鉴无限画布.md](docs/方案-更名与借鉴无限画布.md)
 
+### 许可
+
+采用 [PolyForm Noncommercial License 1.0.0](LICENSE)（非商业许可）。
+
+**为什么不是 MIT**：MIT 明文允许商用（条款里含 "sell"），而本项目希望
+「源码敞开给你看和学，但不许拿它赚钱」。两者不能同时成立，所以选了 PolyForm
+Noncommercial —— 它是正经的开源许可证（不是自造条款），明确允许个人学习、
+研究、实验、业余项目，商业用途不在许可范围内。
+
+**Required Notice**：`Copyright zzq (https://github.com/q93304989-bit)`
+（PolyForm 要求分发时一并带上这行）
+
 ## v0.1.0 — 2026-09-21 ~ 2026-09-26 · 能力建设期（原名 Agnes Studio）
 
 这 6 天的 45 笔提交，按主题归并：
