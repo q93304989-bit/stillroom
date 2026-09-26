@@ -1,0 +1,31 @@
+[project]
+name = "stillroom"
+version = "0.1.0"
+description = "Stillroom：判断优先的本地多模态生成工作台（图片 / 视频），Qt Quick 界面"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "PySide6>=6.6",
+    "httpx>=0.27",
+    "python-dotenv>=1.0",
+]
+
+[dependency-groups]
+# 只装运行期不需要、跑工具与测试才要的东西
+dev = [
+    "pytest>=8.0",
+    "pillow>=10.0",
+    "pyinstaller>=6.22.3",
+]
+
+[tool.uv]
+# 应用而不是库：不需要构建后端，uv sync 只负责环境与依赖
+package = false
+
+[[tool.uv.index]]
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

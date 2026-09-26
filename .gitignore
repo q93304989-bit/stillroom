@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 构建产物
+build/
+dist/
+*.spec.bak
+
+# IDE 配置（含本机 .iml，不该进任何仓库）
+.idea/
+
+# 设计文档与截图：本仓库只放可运行代码（决定见 CHANGELOG 的 v1.0.0）
+docs/
+
+# 本地配置与密钥
+.env
+*.local.json
+
+# 基准数据（Phase 0 生成的假记录，体积大不入库）
+bench-data/
+tools/phase0/_out/
+
+# 调试与截图产生的临时数据
+.debug_ui/
+.probe_data/
+.pytest_cache/
+.tslsp/
+.workbuddy/
+.tmp*/
+.tmp_*
+# 截图工具的临时数据（docs/ 已整体忽略，这里留着以防有人临时放别处）
+*.shotdata/
+dist/Stillroom/self-test.log
+
+# 日志
+*.log
