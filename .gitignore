@@ -12,8 +12,8 @@ dist/
 # IDE 配置（含本机 .iml，不该进任何仓库）
 .idea/
 
-# 设计文档与截图：本仓库只放可运行代码（决定见 CHANGELOG 的 v1.0.0）
-docs/
+# 发布工作区：同步到公开仓库用的临时检出（内含另一个 git 仓库，不能嵌套跟踪）
+.publish/
 
 # 本地配置与密钥
 .env
@@ -31,9 +31,11 @@ tools/phase0/_out/
 .workbuddy/
 .tmp*/
 .tmp_*
-# 截图工具的临时数据（docs/ 已整体忽略，这里留着以防有人临时放别处）
-*.shotdata/
+docs/design/.shotdata/
 dist/Stillroom/self-test.log
 
 # 日志
 *.log
+
+# 公开仓库额外忽略（由 tools/publish.py 依据 EXCLUDED 补齐）
+docs/
