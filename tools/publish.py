@@ -47,6 +47,9 @@ PUBLISH_DIR = ROOT / ".publish"
 #: 不公开的顶层目录（与 CHANGELOG 的 v1.0.0 决定一致）
 EXCLUDED = ("docs", ".idea")
 
+#: 公开仓库「额外忽略」块的锚点，见 apply_public_ignores()
+PUBLIC_IGNORE_MARKER = "# 公开仓库额外忽略（由 tools/publish.py 依据 EXCLUDED 补齐）"
+
 #: 密钥形态（推送前必须扫到 0 处）
 SECRET_PATTERNS = (
     re.compile(r"sk-[A-Za-z0-9]{20,}"),
@@ -170,6 +173,35 @@ def switch_branch(repo: Path, branch: str) -> None:
     print(f"发布区已切到分支 {branch}")
 
 
+def apply_public_ignores(repo: Path) -> None:
+    """给发布区的 .gitignore 补上「只在公开仓库成立」的忽略规则，幂等。
+
+    本地 .gitignore **不能**忽略 `docs/`（本地要跟踪它，忽略了新写的文档会被
+    静默吞掉），公开仓库却只放可运行代码。不补这一块的话，每次同步都会把公开
+    仓库那份带 `docs/` 的 .gitignore 覆盖掉——同一份规则在两边来回翻烙饼，
+    正是这个脚本要消灭的那类「改了一处、漏了另一处」。
+    """
+    path = repo / ".gitignore"
+    if not path.is_file():
+        return
+    text = path.read_text(encoding="utf-8", errors="replace")
+    # 去掉上一次写的块，重新按当前的 EXCLUDED 生成——这样 EXCLUDED 改了也能收敛
+    head = text.split(PUBLIC_IGNORE_MARKER)[0].rstrip("\n")
+    # 必须按「整行」比：本地 .gitignore 里的 `docs/design/.shotdata/` 也含有 `docs/`，
+    # 用子串判断会误以为已经忽略过 docs/（第一版就踩了这个坑）。
+    ignored = {line.strip() for line in head.splitlines()}
+    extra = [name for name in EXCLUDED if f"{name}/" not in ignored]
+    block = ""
+    if extra:
+        block = "\n" + PUBLIC_IGNORE_MARKER + "\n" + "\n".join(f"{name}/" for name in extra) + "\n"
+    updated = head + "\n" + block
+    if updated == text:
+        return          # 内容没变就什么都不做：不重写、不重复打印（连跑两次应当安静）
+    with path.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write(updated)
+    print(f"  公开仓库 .gitignore 额外忽略：{'、'.join(extra) if extra else '无（清理了过期条目）'}")
+
+
 def sync_files(repo: Path) -> tuple[int, list[str]]:
     """把代码同步进发布区（不动 .git）。返回 (文件数, 相对发布区的改动列表)。"""
     staging = repo / ".sync-staging"
@@ -188,6 +220,8 @@ def sync_files(repo: Path) -> tuple[int, list[str]]:
     for entry in staging.iterdir():
         shutil.move(str(entry), str(repo / entry.name))
     staging.rmdir()
+
+    apply_public_ignores(repo)
 
     status = run(["git", "status", "--porcelain"], cwd=repo).stdout
     changed = [line for line in status.splitlines() if line.strip()]
