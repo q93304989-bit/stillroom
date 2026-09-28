@@ -167,9 +167,6 @@ Windows 桌面应用（PySide6 + Qt Quick），onedir 绿色版，双击即用�
 
 **不可以**：商业用途——包括把它或它的修改版拿去卖、用在收费产品或服务里。
 
-这不是 MIT（MIT 明文允许商用），也不是「保留所有权利」（那份声明下别人连学都不好意思看）。
-它介于两者之间：**源码敞开给你看和学，但不许拿它赚钱。**
-
 > Required Notice: Copyright zzq (https://github.com/q93304989-bit)
 
 ## 开发
