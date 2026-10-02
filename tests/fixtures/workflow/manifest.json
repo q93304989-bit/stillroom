@@ -1,0 +1,16 @@
+{
+  "version": "1.0",
+  "fixtures": [
+    { "file": "valid_minimal.json",                       "expected": "PASS" },
+    { "file": "valid_full.json",                          "expected": "PASS" },
+    { "file": "valid_t3_auto.json",                       "expected": "PASS" },
+    { "file": "invalid_schema_missing_required.json",     "expected": "SCHEMA_INVALID" },
+    { "file": "invalid_semantic_understand_disabled.json","expected": "SEMANTIC_INVALID" },
+    { "file": "invalid_semantic_too_few_required.json",   "expected": "SEMANTIC_INVALID" },
+    { "file": "invalid_semantic_evaluate_refine.json",    "expected": "SEMANTIC_INVALID" },
+    { "file": "invalid_trust_t0_agent.json",              "expected": "INSUFFICIENT_TRUST" },
+    { "file": "invalid_capability_denied.json",           "expected": "CAPABILITY_DENIED" },
+    { "file": "invalid_activation_permission.json",       "expected": "INSUFFICIENT_TRUST" },
+    { "file": "invalid_metadata_control_field.json",      "expected": "METADATA_FORBIDDEN" }
+  ]
+}

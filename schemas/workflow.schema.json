@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stillroom.dev/schemas/workflow.schema.json",
+  "title": "Stillroom Workflow Definition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "workflow_id", "version",
+    "pipeline", "permissions", "resource_policy", "step_overrides"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "workflow_id":    { "type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$" },
+    "version":        { "type": "integer", "minimum": 1 },
+    "display_name":   { "type": "string", "maxLength": 120 },
+    "description":    { "type": "string", "maxLength": 2000 },
+
+    "pipeline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["understand", "reference", "generate", "evaluate", "refine", "deliver"],
+      "properties": {
+        "understand": { "$ref": "#/$defs/stepMode" },
+        "reference":  { "$ref": "#/$defs/stepMode" },
+        "generate":   { "$ref": "#/$defs/stepMode" },
+        "evaluate":   { "$ref": "#/$defs/stepMode" },
+        "refine":     { "$ref": "#/$defs/stepMode" },
+        "deliver":    { "$ref": "#/$defs/stepMode" }
+      }
+    },
+
+    "step_overrides": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["understand", "reference", "generate", "evaluate", "refine", "deliver"],
+      "properties": {
+        "understand": { "$ref": "#/$defs/stepOverride" },
+        "reference":  { "$ref": "#/$defs/stepOverride" },
+        "generate":   { "$ref": "#/$defs/stepOverride" },
+        "evaluate":   { "$ref": "#/$defs/stepOverride" },
+        "refine":     { "$ref": "#/$defs/stepOverride" },
+        "deliver":    { "$ref": "#/$defs/stepOverride" }
+      }
+    },
+
+    "permissions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trust_level", "activation", "required_capabilities"],
+      "properties": {
+        "trust_level": { "enum": ["T0", "T1", "T2", "T3"] },
+        "activation":  { "enum": ["auto", "human_required"] },
+        "required_capabilities": {
+          "type": "array",
+          "items": { "enum": ["llm.call", "file.read", "file.write", "http.call", "git.ops", "image.generate"] },
+          "uniqueItems": true
+        }
+      }
+    },
+
+    "resource_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_tokens", "max_execution_time", "max_retries"],
+      "properties": {
+        "max_tokens":         { "type": "integer", "minimum": 100, "maximum": 200000 },
+        "max_execution_time": { "type": "integer", "minimum": 10,  "maximum": 3600 },
+        "max_retries":        { "type": "integer", "minimum": 0,   "maximum": 5 },
+        "max_cost_usd":       { "type": "number",  "minimum": 0 }
+      }
+    },
+
+    "skill_dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["skill_id", "version_range"],
+        "properties": {
+          "skill_id":      { "type": "string" },
+          "version_range": { "type": "string", "pattern": "^[<>=~^0-9.,\\s]+$" }
+        }
+      }
+    },
+
+    "io_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "input_schema_ref":  { "type": "string" },
+        "output_schema_ref": { "type": "string" }
+      }
+    },
+
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+
+  "$defs": {
+    "stepMode": { "enum": ["required", "optional", "disabled"] },
+    "stepOverride": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cancellable"],
+      "properties": {
+        "cancellable": { "type": "boolean" },
+        "timeout":     { "type": "integer", "minimum": 5, "maximum": 600 }
+      }
+    }
+  }
+}

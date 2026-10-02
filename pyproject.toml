@@ -8,6 +8,8 @@ dependencies = [
     "PySide6>=6.6",
     "httpx>=0.27",
     "python-dotenv>=1.0",
+    # 无头层（validator / MCP Server）：刻意不依赖 PySide6，P1 协议要用它校验
+    "jsonschema>=4.20",
 ]
 
 [dependency-groups]

@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0",
+  "workflow_id": "article_generation",
+  "version": 3,
+  "display_name": "图文并茂的短文章生成",
+  "description": "六步全部显式声明，reference / evaluate / refine 均为必跑；用于验证完整形态。",
+  "pipeline": {
+    "understand": "required",
+    "reference": "required",
+    "generate": "required",
+    "evaluate": "required",
+    "refine": "required",
+    "deliver": "required"
+  },
+  "step_overrides": {
+    "understand": { "cancellable": true, "timeout": 30 },
+    "reference": { "cancellable": true },
+    "generate": { "cancellable": false, "timeout": 600 },
+    "evaluate": { "cancellable": true },
+    "refine": { "cancellable": false },
+    "deliver": { "cancellable": false }
+  },
+  "permissions": {
+    "trust_level": "T2",
+    "activation": "human_required",
+    "required_capabilities": ["llm.call", "file.read", "file.write"]
+  },
+  "resource_policy": {
+    "max_tokens": 20000,
+    "max_execution_time": 120,
+    "max_retries": 2,
+    "max_cost_usd": 0.5
+  },
+  "skill_dependencies": [
+    { "skill_id": "prompt_writer", "version_range": ">=1.0,<2.0" }
+  ],
+  "io_contract": {
+    "input_schema_ref": "schemas/article_input.schema.json",
+    "output_schema_ref": "schemas/article_output.schema.json"
+  },
+  "metadata": {
+    "author": "agent",
+    "tags": ["article", "text"],
+    "notes": { "purpose": "full-shape fixture", "reviewed_by": "human" }
+  }
+}

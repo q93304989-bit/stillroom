@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "workflow_id": "evaluate_without_refine",
+  "version": 1,
+  "pipeline": {
+    "understand": "required",
+    "reference": "optional",
+    "generate": "required",
+    "evaluate": "required",
+    "refine": "disabled",
+    "deliver": "required"
+  },
+  "step_overrides": {
+    "understand": { "cancellable": true },
+    "reference": { "cancellable": true },
+    "generate": { "cancellable": false },
+    "evaluate": { "cancellable": true },
+    "refine": { "cancellable": false },
+    "deliver": { "cancellable": false }
+  },
+  "permissions": {
+    "trust_level": "T2",
+    "activation": "human_required",
+    "required_capabilities": ["llm.call"]
+  },
+  "resource_policy": {
+    "max_tokens": 4000,
+    "max_execution_time": 60,
+    "max_retries": 1
+  }
+}

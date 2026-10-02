@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "workflow_id": "understand_disabled",
+  "version": 1,
+  "pipeline": {
+    "understand": "disabled",
+    "reference": "required",
+    "generate": "required",
+    "evaluate": "required",
+    "refine": "required",
+    "deliver": "required"
+  },
+  "step_overrides": {
+    "understand": { "cancellable": true },
+    "reference": { "cancellable": true },
+    "generate": { "cancellable": false },
+    "evaluate": { "cancellable": true },
+    "refine": { "cancellable": false },
+    "deliver": { "cancellable": false }
+  },
+  "permissions": {
+    "trust_level": "T2",
+    "activation": "human_required",
+    "required_capabilities": ["llm.call"]
+  },
+  "resource_policy": {
+    "max_tokens": 4000,
+    "max_execution_time": 60,
+    "max_retries": 1
+  }
+}

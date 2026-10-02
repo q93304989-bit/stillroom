@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "workflow_id": "auto_without_permission",
+  "version": 1,
+  "description": "JSON Schema 合法，但 activation=auto 却只声明 T2，且 creator 无 auto 权限 —— 由 L3 拦截。",
+  "pipeline": {
+    "understand": "required",
+    "reference": "optional",
+    "generate": "required",
+    "evaluate": "optional",
+    "refine": "optional",
+    "deliver": "required"
+  },
+  "step_overrides": {
+    "understand": { "cancellable": true },
+    "reference": { "cancellable": true },
+    "generate": { "cancellable": false },
+    "evaluate": { "cancellable": true },
+    "refine": { "cancellable": false },
+    "deliver": { "cancellable": false }
+  },
+  "permissions": {
+    "trust_level": "T2",
+    "activation": "auto",
+    "required_capabilities": ["llm.call"]
+  },
+  "resource_policy": {
+    "max_tokens": 4000,
+    "max_execution_time": 60,
+    "max_retries": 1
+  }
+}

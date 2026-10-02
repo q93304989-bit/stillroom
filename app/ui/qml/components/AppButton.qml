@@ -27,8 +27,10 @@ Button {
                 return control.hovered ? theme.dangerBg : theme.fill;
             return control.hovered ? theme.fillHover : theme.fill;
         }
-        border.width: control.primary ? 0 : 1
-        border.color: control.primary ? "transparent" : theme.cardBorder
+        border.width: control.activeFocus ? 2 : (control.primary ? 0 : 1)
+        border.color: control.activeFocus
+                    ? (control.primary ? theme.onAccent : theme.accent)
+                    : (control.primary ? "transparent" : theme.cardBorder)
     }
 
     contentItem: Text {

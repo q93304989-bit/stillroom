@@ -22,6 +22,32 @@ ApplicationWindow {
        （上一个引擎释放后地址被复用，返回的是已失效的旧包装），读属性值则没这个问题。 */
     readonly property int pageCount: stack.count
     readonly property int agentStepCount: agentPage.stepCount
+    /* 助手页「对话」：桥本身、消息条数、真的画出来几行、在不在流式、推了几段、最后一条回复。
+       桥由 Python 侧注入为上下文属性 `assistantBridge`；没注入时（老夹具、截图工具）
+       这里一律给空值，而不是让绑定去求值一个不存在的名字（那会刷一屏 QML 报错）。 */
+    readonly property var chatBridge: typeof assistantBridge !== "undefined" ? assistantBridge : null
+    readonly property int agentChatMessages: chatBridge ? chatBridge.messageCount : 0
+    readonly property int agentChatRows: agentPage.chatRows
+    readonly property string agentChatDraft: agentPage.chatDraft
+    readonly property bool agentChatStreaming: chatBridge ? chatBridge.streaming : false
+    readonly property int agentChatChunks: chatBridge ? chatBridge.streamedChunks : 0
+    readonly property string agentChatLastReply: chatBridge ? chatBridge.lastReplyText : ""
+    readonly property bool agentChatAtBottom: agentPage.chatAtBottom
+    readonly property bool agentChatAutoFollow: agentPage.chatAutoFollow
+    readonly property real agentChatScrollY: agentPage.chatScrollY
+    readonly property bool agentChatBackToBottomVisible: agentPage.chatBackToBottomVisible
+    readonly property real agentChatInputHeight: agentPage.chatInputHeight
+    readonly property real agentChatMaxInputHeight: agentPage.chatMaxInputHeight
+    readonly property string agentChatKeyHint: agentPage.chatKeyHint
+    readonly property int agentChatCacheBuffer: agentPage.chatCacheBuffer
+    readonly property bool agentChatComposerFocused: agentPage.chatComposerFocused
+    readonly property bool agentChatFocusRingVisible: agentPage.chatFocusRingVisible
+    readonly property bool agentChatComposerAcceptsTabFocus: agentPage.chatComposerAcceptsTabFocus
+    readonly property bool agentChatSendAcceptsTabFocus: agentPage.chatSendAcceptsTabFocus
+    readonly property bool agentChatJumpAcceptsTabFocus: agentPage.chatJumpAcceptsTabFocus
+    readonly property string agentChatHoveredMessageId: agentPage.chatHoveredMessageId
+    readonly property bool agentChatActionsVisible: agentPage.chatActionsVisible
+    readonly property int agentTabIndex: agentPage.currentTab
     readonly property int agentContextItems: agentBridge.contextItems.length
     readonly property bool agentHasContext: agentBridge.hasContext
     readonly property bool agentCanEditContext: agentBridge.canEditContext
@@ -58,6 +84,44 @@ ApplicationWindow {
     /* 切到某一页：导航栏用，测试也用（同一入口，测试才不会绕过真实布局） */
     function openPage(index) {
         stack.currentIndex = index;
+    }
+
+    /* 给界面测试用：切助手页的两个页签（0 = 对话，1 = 跑流程），与手点按钮是同一条路。 */
+    function openAgentTab(index) {
+        agentPage.tabIndex = index;
+    }
+
+    /* 给界面测试用：走对话面板的真实发送入口（等同人打完字点「发送」）。 */
+    function sendChat(text) {
+        agentPage.sendChat(text);
+    }
+
+    function setChatDraft(text) {
+        agentPage.setChatDraft(text);
+    }
+
+    function focusChatComposer() {
+        agentPage.focusChatComposer();
+    }
+
+    function handleChatComposerKey(key, modifiers) {
+        return agentPage.handleChatComposerKey(key, modifiers);
+    }
+
+    function setChatMessageHovered(messageId, hovered) {
+        agentPage.setChatMessageHovered(messageId, hovered);
+    }
+
+    function setChatScrollPosition(value) {
+        agentPage.setChatScrollPosition(value);
+    }
+
+    function scrollChatToBottom() {
+        agentPage.scrollChatToBottom();
+    }
+
+    function chatMessageAction(kind, messageId) {
+        agentPage.chatMessageAction(kind, messageId);
     }
 
     /* 给界面测试用：按真实入口打开历史灯箱（与点缩略图走的是同一条路）。 */
@@ -229,7 +293,10 @@ ApplicationWindow {
             Layout.fillHeight: true
             currentIndex: 0
 
-            AgentPage { id: agentPage }
+            AgentPage {
+                id: agentPage
+                chatBridge: window.chatBridge
+            }
             ImagePage { id: imagePage }
             VideoPage { id: videoPage }
             HistoryPage { id: historyPage }
@@ -303,6 +370,9 @@ ApplicationWindow {
             Text {
                 Layout.fillWidth: true
                 text: {
+                    if (chatBridge && chatBridge.streaming)
+                        return "助手正在回复：第 " + chatBridge.streamedChunks + " / "
+                               + chatBridge.totalChunks + " 段";
                     if (agentBridge.running)
                         return "助手正在跑：" + agentBridge.statusText
                                + (agentBridge.stepCount > 0 ? "（第 " + agentBridge.stepCount + " 步）" : "");

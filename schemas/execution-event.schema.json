@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stillroom.dev/schemas/execution-event.schema.json",
+  "title": "Stillroom Execution Event",
+  "description": "执行事件（v1.0 冻结）。事件只存元数据 + hash + ref：大对象一律进 Artifact Store，SQLite 只留轻量行，便于 Replay。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "event_id", "execution_id", "seq", "type", "at", "status_after"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "event_id":       { "type": "string", "minLength": 1, "maxLength": 128 },
+    "execution_id":   { "type": "string", "minLength": 1, "maxLength": 128 },
+    "request_id":     { "type": "string", "minLength": 1, "maxLength": 128 },
+
+    "seq":  { "type": "integer", "minimum": 0 },
+    "at":   { "type": "string", "format": "date-time" },
+
+    "type": {
+      "enum": [
+        "engine_started",
+        "engine_step_ended",
+        "engine_completed",
+        "engine_failed",
+        "engine_timeout",
+        "budget_exceeded",
+        "input_required",
+        "input_provided",
+        "abort_requested",
+        "resume_requested"
+      ]
+    },
+
+    "status_before": { "$ref": "#/$defs/state" },
+    "status_after":  { "$ref": "#/$defs/state" },
+
+    "step": { "$ref": "#/$defs/step" },
+
+    "error_code": { "type": "string", "maxLength": 64 },
+    "message":    { "type": "string", "maxLength": 2000 },
+
+    "payload_ref":  { "type": "string", "maxLength": 512 },
+    "payload_hash": { "$ref": "#/$defs/hash" },
+
+    "meta": { "type": "object", "maxProperties": 32 }
+  },
+  "$defs": {
+    "state": {
+      "enum": [
+        "PENDING",
+        "RUNNING",
+        "WAITING_INPUT",
+        "ABORT_PENDING",
+        "COMPLETED",
+        "FAILED",
+        "TIMEOUT",
+        "ABORTED",
+        "BUDGET_EXCEEDED"
+      ]
+    },
+    "step": {
+      "enum": ["understand", "reference", "generate", "evaluate", "refine", "deliver"]
+    },
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

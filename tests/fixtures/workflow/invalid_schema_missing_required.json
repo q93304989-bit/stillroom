@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "workflow_id": "missing_permissions",
+  "version": 1,
+  "pipeline": {
+    "understand": "required",
+    "reference": "disabled",
+    "generate": "required",
+    "evaluate": "disabled",
+    "refine": "disabled",
+    "deliver": "required"
+  },
+  "step_overrides": {
+    "understand": { "cancellable": true },
+    "reference": { "cancellable": false },
+    "generate": { "cancellable": false },
+    "evaluate": { "cancellable": false },
+    "refine": { "cancellable": false },
+    "deliver": { "cancellable": false }
+  },
+  "resource_policy": {
+    "max_tokens": 4000,
+    "max_execution_time": 60,
+    "max_retries": 1
+  }
+}

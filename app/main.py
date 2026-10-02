@@ -16,6 +16,7 @@ from PySide6.QtQuickControls2 import QQuickStyle
 from app.bootstrap import build_context
 from app.config import settings
 from app.ui.agent_bridge import AgentBridge
+from app.ui.assistant_bridge import AssistantBridge
 from app.ui.async_runner import AsyncRunner
 from app.ui.bridge import UiBridge
 from app.ui.knowledge_bridge import KnowledgeBridge
@@ -78,10 +79,13 @@ def main(argv: list[str] | None = None) -> int:
     agent_bridge = AgentBridge(context, runner, bridge)
     selfupdate_bridge = SelfUpdateBridge(context, runner)
     knowledge_bridge = KnowledgeBridge(context, runner)
+    # 助手页「对话」：数据只走 adapter（app/adapters/protocol_client.py），界面不碰协议层
+    assistant_bridge = AssistantBridge(runner)
 
     engine = QQmlApplicationEngine()
     # 桥挂到引擎下：Python 先回收桥的话，QML 会拿着 null 去刷绑定，退出时刷一屏报错
-    for obj in (bridge, settings_bridge, agent_bridge, selfupdate_bridge, knowledge_bridge):
+    for obj in (bridge, settings_bridge, agent_bridge, selfupdate_bridge, knowledge_bridge,
+                assistant_bridge):
         obj.setParent(engine)
     qml_messages: list[str] = []
     engine.warnings.connect(lambda items: qml_messages.extend(str(item) for item in items))
@@ -91,6 +95,7 @@ def main(argv: list[str] | None = None) -> int:
     engine.rootContext().setContextProperty("agentBridge", agent_bridge)
     engine.rootContext().setContextProperty("selfUpdateBridge", selfupdate_bridge)
     engine.rootContext().setContextProperty("knowledgeBridge", knowledge_bridge)
+    engine.rootContext().setContextProperty("assistantBridge", assistant_bridge)
     engine.addImportPath(str(QML_DIR))
     engine.load(QUrl.fromLocalFile(str(QML_DIR / "Main.qml")))
 
@@ -126,6 +131,7 @@ def main(argv: list[str] | None = None) -> int:
     def _shutdown() -> None:
         bridge.detach()
         agent_bridge.detach()
+        assistant_bridge.detach()
         # 关掉 HTTP 连接池与两个数据库句柄（在循环线程里做），再停循环线程。
         # 留着让解释器去收，退出时刻「谁先被回收」就不可控了。
         try:

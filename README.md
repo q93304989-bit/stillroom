@@ -111,6 +111,49 @@ Windows 桌面应用（PySide6 + Qt Quick），onedir 绿色版，双击即用�
 
 自检（不开窗口验证程序是否正常）：`Stillroom.exe --self-test`，结果写同目录 `self-test.log`。
 
+## 无头服务（MCP）
+
+除开窗口，Stillroom 还能以 **Agent-to-Service** 的方式被上层 Agent 调用：走
+**MCP（Model Context Protocol）** 连进来，把本机当「**工作流注册中心 + 路由执行引擎**」。
+Agent 只能操作 **Workflow Definition** 与 **Execution**，**不能直接碰 Kernel**。
+
+启动（换行分隔 JSON-RPC 2.0 over stdio，**无** `Content-Length` 头）：
+
+```bash
+python -m mcp_server --identity human --db ./protocol.db
+```
+
+| 参数 | 环境变量 | 默认 |
+|---|---|---|
+| `--identity` | `STILLROOM_IDENTITY` | **无默认，必填**。三选一：`agent` / `human` / `system`；**未知身份直接拒绝启动**，不回落默认 |
+| `--db` | `STILLROOM_PROTOCOL_DB` | `%APPDATA%\Stillroom\protocol.db`（无 `APPDATA` 时 `~/.stillroom/protocol.db`）。与 GUI 的 `history.db` **分开** |
+| `--artifacts` | — | 无默认，交给 `<db 目录>/artifacts` |
+
+> **为什么 `--identity` 不给默认值**：MCP Server 在**启动时**就确定 `creator_context`，
+> 之后**不接受**来自客户端的身份输入（身份没有第二条入口）。若给个默认值，误启动的服务
+> 会以某个身份**静默运行** —— 那正是安全模型的崩点。宁可不填就报错退出。
+
+**线协议只有 3 个 MCP 方法**：`initialize` / `tools/list` / `tools/call`。
+**11 个工具名（`list_skills` / `create_workflow` / `execute_workflow` / …）是
+`tools/call` 的 `params.name`，不是方法名** —— 否则标准 MCP 客户端连不上。
+
+错误分层（客户端据此分支，别匹配文案）：
+
+- `-32602` 一律带 **`error.data.reason`** ∈ {`invalid_name` `unknown_tool`
+  `invalid_arguments` `unexpected_param`} —— 全是**调用形状**问题；
+- 工具自身的业务失败走返回体里的 **`isError: true`**（判据 `ok is not True`），
+  **不走 `error` 字段**；`arguments` **内部**字段缺失也属这一层。
+
+手动冒烟（发一行、收一行）：
+
+```bash
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | python -m mcp_server --identity human --db ./tmp.db
+```
+
+契约（`contracts/`：执行状态机 / MCP 工具 / 持久化）与 schema（`schemas/`）已在
+**协议 v1.0** 冻结：兼容变更进次版本、**不兼容变更必须发新版本并走 deprecation 周期**。
+详见 [CHANGELOG.md](CHANGELOG.md)。
+
 ## 配置项
 
 密钥走 `.env`（exe 同级，**不出本机**），偏好走 `%APPDATA%\AgnesGenerator\settings.json`。
@@ -173,17 +216,33 @@ Windows 桌面应用（PySide6 + Qt Quick），onedir 绿色版，双击即用�
 
 ```powershell
 .venv\Scripts\python.exe -m pytest -q -o addopts=""   # 全量测试
+.venv\Scripts\python.exe tools\prove_mcp_server.py    # 变异反证（27 场景；本机需按场景名分批跑）
 .venv\Scripts\python.exe tools\build.py --clean       # 打包（产物 dist/Stillroom/）
 ```
+
+> 本机 `PySide6` DLL 加载失败时，纯 GUI 模块采集即失败、图缩放类用例报「图片无法解码」。
+> **排除这些文件后的无头子集仍应全绿**；12 项环境失败的清单与 A10 的复验要求见
+> [CHANGELOG.md](CHANGELOG.md)。
 
 架构分层（依赖只能向下，不能向上或成环）：
 
 ```
-app.config   ← 路径 / 密钥 / 偏好，三个唯一入口
-app.net      ← 出网与错误分类
-app.clients  ← 图片 / 视频 / 图床 / LLM / 视觉 / 判断客户端
+（GUI 侧，依赖 PySide6）
+app.config       ← 路径 / 密钥 / 偏好，三个唯一入口
+app.net          ← 出网与错误分类
+app.clients      ← 图片 / 视频 / 图床 / LLM / 视觉 / 判断客户端
 app.capabilities ← 能力注册表（工具描述 + 元数据 + 闸门）
-app.services ← 编排（生成 / 检索 / 知识库 / 历史 / 上下文）
-app.agent    ← 六步流水线（阶段 + 判断 + 精修）
-app.ui       ← 界面（桥 + QML）
+app.services     ← 编排（生成 / 检索 / 知识库 / 历史 / 上下文）
+app.agent        ← 六步流水线（阶段 + 判断 + 精修）
+app.ui           ← 界面（桥 + QML）
+app.adapters     ← GUI 接协议层的最小客户端（数据只走它，界面不碰协议）
+
+（无头侧，刻意不依赖 PySide6）
+mcp_server/      ← 线协议（3 个 MCP 方法）+ 11 个工具（入口层）
+runtime/         ← repository / registry / artifacts / stub_kernel / router
+validator/       ← 执行状态机 + 四层校验 + 错误码
+schemas/         ← JSON Schema
 ```
+
+依赖方向：`mcp_server/ → runtime/ → validator/ → schemas/`，且无头层**不得** import
+PySide6 或 `app.*`（由 `tests/test_headless_boundary.py` 强制）。

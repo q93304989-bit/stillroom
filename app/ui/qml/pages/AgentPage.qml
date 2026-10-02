@@ -4,19 +4,83 @@ import QtQuick.Layouts
 import QtQuick.Dialogs
 import "../components"
 
-/* 助手页：一句话跑完整流程，并实时看到每一步。
+/* 助手页：两个页签。
 
-   页面上只有四块：要什么 → 步骤时间线 → 请示（要人决定时才出现）→ 结果。
-   按钮的含义严格对应后端的状态，界面自己不判断任务成败。 */
+   对话：说一句，回复按语义边界一段段显示（伪流式，切块与节奏见 app/ui/pseudo_stream.py）。
+   跑流程：一句话跑完整流程，并实时看到每一步。
+
+   两边的按钮含义都严格对应后端状态，界面自己不判断任务成败。 */
 Item {
     id: page
     objectName: "agentPage"
 
+    /* 对话面板的桥由 Main.qml 注入（Python 侧注册为上下文属性 `assistantBridge`）。
+       没注入时（调试脚本 / 老夹具 / 截图工具）对话页签整块降级，界面落在「跑流程」：
+       那里的界面不依赖新桥，不能让工具截到一张空的对话页。 */
+    property var chatBridge: null
+    readonly property bool chatAvailable: chatBridge !== null
+
     property double startedAt: 0
     property int elapsed: 0
 
+    /* 当前页签：0 = 对话，1 = 跑流程 */
+    property int tabIndex: 0
+    readonly property int currentTab: chatAvailable ? tabIndex : 1
+
     /* 时间线上的行数（界面上看到的步数；测试与截图工具据此确认绑定真的通了） */
     readonly property int stepCount: stepModel.count
+
+    /* 对话面板真的画出来了几条、输入框里现在有什么（给界面测试读：证明信号走到了 QML） */
+    readonly property int chatRows: chatPanel.messageCount
+    readonly property string chatDraft: chatPanel.draft
+    readonly property bool chatAtBottom: chatPanel.atBottom
+    readonly property bool chatAutoFollow: chatPanel.autoFollow
+    readonly property real chatScrollY: chatPanel.scrollY
+    readonly property bool chatBackToBottomVisible: chatPanel.backToBottomVisible
+    readonly property real chatInputHeight: chatPanel.inputHeight
+    readonly property real chatMaxInputHeight: chatPanel.maxInputHeight
+    readonly property string chatKeyHint: chatPanel.keyHint
+    readonly property int chatCacheBuffer: chatPanel.cacheBuffer
+    readonly property bool chatComposerFocused: chatPanel.composerFocused
+    readonly property bool chatFocusRingVisible: chatPanel.focusRingVisible
+    readonly property bool chatComposerAcceptsTabFocus: chatPanel.composerAcceptsTabFocus
+    readonly property bool chatSendAcceptsTabFocus: chatPanel.sendAcceptsTabFocus
+    readonly property bool chatJumpAcceptsTabFocus: chatPanel.jumpAcceptsTabFocus
+    readonly property string chatHoveredMessageId: chatPanel.hoveredMessageId
+    readonly property bool chatActionsVisible: chatPanel.actionsVisible
+
+    /* 给界面测试用：走对话面板的真实发送入口（与点「发送」同一条路）。 */
+    function sendChat(text) {
+        chatPanel.send(text);
+    }
+
+    function setChatDraft(text) {
+        chatPanel.setDraft(text);
+    }
+
+    function focusChatComposer() {
+        chatPanel.focusComposer();
+    }
+
+    function handleChatComposerKey(key, modifiers) {
+        return chatPanel.handleComposerKey(key, modifiers);
+    }
+
+    function setChatMessageHovered(messageId, hovered) {
+        chatPanel.setHovered(messageId, hovered);
+    }
+
+    function setChatScrollPosition(value) {
+        chatPanel.setScrollPosition(value);
+    }
+
+    function scrollChatToBottom() {
+        chatPanel.scrollChatToBottom();
+    }
+
+    function chatMessageAction(kind, messageId) {
+        chatPanel.messageAction(kind, messageId);
+    }
 
     function stepColor(ok, live) {
         if (live && agentBridge.running)
@@ -72,10 +136,53 @@ Item {
         }
     }
 
+    /* 页签条。两个页签各是一整块内容，切换只改 tabIndex；界面测试走 openAgentTab()，
+       与手点按钮是同一条路。 */
+    RowLayout {
+        id: tabBar
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.margins: 16
+        spacing: 8
+
+        AppButton {
+            text: "对话"
+            primary: page.currentTab === 0
+            onClicked: page.tabIndex = 0
+        }
+        AppButton {
+            text: "跑流程"
+            primary: page.currentTab === 1
+            onClicked: page.tabIndex = 1
+        }
+        Item { Layout.fillWidth: true }
+    }
+
+    /* 对话页签：伪流式的展示层。桥没注入时它自己是空的（见 ChatPanel 的 ready）。 */
+    ChatPanel {
+        id: chatPanel
+        visible: page.currentTab === 0
+        bridge: page.chatBridge
+        anchors.top: tabBar.bottom
+        anchors.topMargin: 12
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: 20
+        anchors.rightMargin: 20
+        anchors.bottomMargin: 20
+    }
+
     ScrollView {
         id: scroll
         objectName: "agentScroll"          // 截图工具靠它滚到长期档案那一块
-        anchors.fill: parent
+        visible: page.currentTab === 1
+        anchors.top: tabBar.bottom
+        anchors.topMargin: 12
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
         contentWidth: availableWidth
         ScrollBar.vertical.policy: ScrollBar.AsNeeded
 

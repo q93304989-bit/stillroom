@@ -15,7 +15,26 @@ from pathlib import Path
 
 import pytest
 
-os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")   # 界面测试一律离屏
+def _configure_qt_rendering_environment() -> None:
+    """在 Qt 初始化前准备好离屏渲染环境。
+
+    Windows 的 Qt 安装包不带中文字体，必须显式把 QPA 指到系统字体目录，
+    否则 QFontDatabase 可能为空，截图里的中文会全部变成方框。
+    """
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")  # 界面测试一律离屏
+    if "QT_QPA_FONTDIR" in os.environ:
+        return
+    candidates = [
+        Path(os.environ.get("WINDIR", r"C:\Windows")) / "Fonts",
+        Path("/usr/share/fonts"),
+    ]
+    for candidate in candidates:
+        if candidate.is_dir():
+            os.environ["QT_QPA_FONTDIR"] = str(candidate)
+            return
+
+
+_configure_qt_rendering_environment()
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 

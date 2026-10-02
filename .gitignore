@@ -27,6 +27,7 @@ tools/phase0/_out/
 .debug_ui/
 .probe_data/
 .pytest_cache/
+.pytest-tmp/
 .tslsp/
 .workbuddy/
 .tmp*/

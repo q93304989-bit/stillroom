@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0",
+  "workflow_id": "auto_summarize",
+  "version": 1,
+  "display_name": "自动摘要（信任达标后免人工激活）",
+  "description": "T3 + activation=auto：要求 creator 的 max_trust_level 达 T3 且 can_auto_activate=true 才成立。",
+  "pipeline": {
+    "understand": "required",
+    "reference": "optional",
+    "generate": "required",
+    "evaluate": "required",
+    "refine": "optional",
+    "deliver": "required"
+  },
+  "step_overrides": {
+    "understand": { "cancellable": true },
+    "reference": { "cancellable": true },
+    "generate": { "cancellable": false },
+    "evaluate": { "cancellable": true },
+    "refine": { "cancellable": false },
+    "deliver": { "cancellable": false }
+  },
+  "permissions": {
+    "trust_level": "T3",
+    "activation": "auto",
+    "required_capabilities": ["llm.call"]
+  },
+  "resource_policy": {
+    "max_tokens": 8000,
+    "max_execution_time": 60,
+    "max_retries": 2
+  },
+  "metadata": {
+    "purpose": "auto-activation fixture"
+  }
+}

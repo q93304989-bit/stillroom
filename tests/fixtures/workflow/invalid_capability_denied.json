@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "workflow_id": "needs_http_call",
+  "version": 1,
+  "description": "结构完全合法，但 creator 没有被授权 http.call。",
+  "pipeline": {
+    "understand": "required",
+    "reference": "required",
+    "generate": "required",
+    "evaluate": "optional",
+    "refine": "optional",
+    "deliver": "required"
+  },
+  "step_overrides": {
+    "understand": { "cancellable": true },
+    "reference": { "cancellable": true },
+    "generate": { "cancellable": false },
+    "evaluate": { "cancellable": true },
+    "refine": { "cancellable": false },
+    "deliver": { "cancellable": false }
+  },
+  "permissions": {
+    "trust_level": "T2",
+    "activation": "human_required",
+    "required_capabilities": ["llm.call", "http.call"]
+  },
+  "resource_policy": {
+    "max_tokens": 4000,
+    "max_execution_time": 60,
+    "max_retries": 1
+  }
+}
